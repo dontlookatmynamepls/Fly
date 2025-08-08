@@ -1,0 +1,86 @@
+loadstring(game:HttpGet('https://raw.githubusercontent.com/GhostPlayer352/Test4/main/Vehicle%20Fly%20Gui'))()--// SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+--// VAR
+local flying = false
+local bodyGyro, bodyVelocity
+local hrp
+
+--// UPDATE CHARACTER ON RESPAWN
+local function updateCharacter()
+    local char = player.Character or player.CharacterAdded:Wait()
+    hrp = char:WaitForChild("HumanoidRootPart")
+end
+updateCharacter()
+
+player.CharacterAdded:Connect(function()
+    stopFly()
+    updateCharacter()
+end)
+
+--// WIZARD UI
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wizard"))()
+local Window = Library:NewWindow("Flandre Hub")
+local Section = Window:NewSection("Bay")
+
+--// UI VARIABLES
+local flySpeed = 50
+
+--// UI: TOGGLE FLY
+Section:CreateToggle("Toggle Fly", function(state)
+    if state then
+        startFly()
+    else
+        stopFly()
+    end
+end)
+
+--// UI: TEXTBOX TỐC ĐỘ
+Section:CreateTextbox("Fly Speed (default: 50)", function(text)
+    local num = tonumber(text)
+    if num then
+        flySpeed = num
+    end
+end)
+
+--// HÀM: DỪNG BAY
+function stopFly()
+    flying = false
+    RunService:UnbindFromRenderStep("HaidzFly")
+    if bodyGyro then bodyGyro:Destroy() end
+    if bodyVelocity then bodyVelocity:Destroy() end
+    if hrp then hrp.Velocity = Vector3.zero end
+end
+
+--// HÀM: BẮT ĐẦU BAY
+function startFly()
+    if not hrp then return end
+    flying = true
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.P = 9e4
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+    bodyGyro.Parent = hrp
+
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.zero
+    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVelocity.P = 1250
+    bodyVelocity.Parent = hrp
+
+    RunService:BindToRenderStep("HaidzFly", Enum.RenderPriority.Character.Value, function()
+        if flying and hrp then
+            local cam = workspace.CurrentCamera
+            local dir = cam.CFrame.LookVector
+            bodyGyro.CFrame = cam.CFrame
+            bodyVelocity.Velocity = dir * flySpeed
+        end
+    end)
+end
+
+Section:CreateButton("Script Soure:@haidzthi", function()
+print("Clicked")
+end)
